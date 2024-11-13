@@ -2,7 +2,7 @@ public abstract class Accommodation {
     private String roomNumber;
     private String roomType;
     private boolean isAvailable;
-    private double pricePerNight;  // Price for 1 night
+    private double pricePerNight;
 
     public Accommodation(String roomNumber, String roomType, double pricePerNight) {
         this.roomNumber = roomNumber;
