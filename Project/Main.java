@@ -55,11 +55,13 @@ public class Main {
         }
     }
 
+    // ignore case sensitive for room numbers
     private static void displayAvailableAccommodations() {
         System.out.println("\n---- Available Accommodations ----");
         for (Accommodation acc : accommodations) {
             if (acc.isAvailable()) {
                 acc.displayRoomDetails();
+                System.out.println("----------");
             }
         }
     }
@@ -92,6 +94,7 @@ public class Main {
             }
         }
 
+        // change date to dd/mm/yyyy format, gmt
         if (selectedAccommodation != null) {
             System.out.print("Enter check-in date (MM/dd/yyyy): ");
             String checkInString = scanner.nextLine();
@@ -115,6 +118,7 @@ public class Main {
         }
     }
 
+        // cannot edit hotel room, check in date, check out date
     private static void editReservation(Scanner scanner) {
         System.out.print("Enter guest name to edit: ");
         scanner.nextLine();
