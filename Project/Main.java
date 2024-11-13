@@ -1,5 +1,4 @@
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.Scanner;
 
@@ -8,12 +7,13 @@ public class Main {
     private static List<Reservation> reservations = new ArrayList<>();
 
     public static void main(String[] args) {
-        accommodations.add(new Hotel("H101", "Queen bed for 2"));
-        accommodations.add(new Hotel("H102", "Twin single beds"));
-        accommodations.add(new Hotel("H103", "2 queen beds"));
-        accommodations.add(new Hotel("H104", "4 single beds"));
-        accommodations.add(new Chalet("C101", "Forest View"));
-        accommodations.add(new Chalet("C102", "Sea View"));
+
+        accommodations.add(new Hotel("H101", "Queen bed for 2", 120));
+        accommodations.add(new Hotel("H102", "Twin single beds", 140));
+        accommodations.add(new Hotel("H103", "2 queen beds", 100));
+        accommodations.add(new Hotel("H104", "4 single beds", 110));
+        accommodations.add(new Chalet("C101", "Forest View", 175));
+        accommodations.add(new Chalet("C102", "Sea View", 200));
 
         Scanner scanner = new Scanner(System.in);
         boolean running = true;
@@ -47,7 +47,6 @@ public class Main {
                     break;
                 case 6:
                     running = false;
-                    System.out.println("Exiting the system...");
                     break;
                 default:
                     System.out.println("Invalid choice, please try again.");
@@ -55,7 +54,6 @@ public class Main {
         }
     }
 
-    // ignore case sensitive for room numbers
     private static void displayAvailableAccommodations() {
         System.out.println("\n---- Available Accommodations ----");
         for (Accommodation acc : accommodations) {
@@ -73,6 +71,7 @@ public class Main {
         } else {
             for (Reservation res : reservations) {
                 res.displayReservationDetails();
+                System.out.println("----------");
             }
         }
     }
@@ -81,78 +80,105 @@ public class Main {
         System.out.print("Enter guest name: ");
         scanner.nextLine();
         String guestName = scanner.nextLine();
-
+    
         displayAvailableAccommodations();
         System.out.print("Enter room number to book: ");
-        String roomNumber = scanner.nextLine();
-
+        String roomNumber = scanner.nextLine().toLowerCase();
+    
         Accommodation selectedAccommodation = null;
         for (Accommodation acc : accommodations) {
-            if (acc.getRoomNumber().equals(roomNumber) && acc.isAvailable()) {
+            if (acc.getRoomNumber().toLowerCase().equals(roomNumber) && acc.isAvailable()) {
                 selectedAccommodation = acc;
                 break;
             }
         }
-
-        // change date to dd/mm/yyyy format, gmt
+    
         if (selectedAccommodation != null) {
-            System.out.print("Enter check-in date (MM/dd/yyyy): ");
-            String checkInString = scanner.nextLine();
-            System.out.print("Enter check-out date (MM/dd/yyyy): ");
-            String checkOutString = scanner.nextLine();
+            System.out.print("Enter number of nights: ");
+            int nights = scanner.nextInt();
+    
+            Reservation reservation = new Reservation(guestName, selectedAccommodation, nights);
+            reservations.add(reservation);
+            selectedAccommodation.bookRoom();
+            System.out.println("Reservation made!");
 
-            try {
-                Date checkInDate = new Date(checkInString);
-                Date checkOutDate = new Date(checkOutString);
-
-                Reservation reservation = new Reservation(guestName, selectedAccommodation, checkInDate, checkOutDate);
-                reservations.add(reservation);
-                selectedAccommodation.bookRoom();
-
-                System.out.println("Reservation made!");
-            } catch (Exception e) {
-                System.out.println("Invalid date format.");
-            }
         } else {
             System.out.println("Room not available.");
         }
     }
+    
 
-        // cannot edit hotel room, check in date, check out date
     private static void editReservation(Scanner scanner) {
         System.out.print("Enter guest name to edit: ");
         scanner.nextLine();
         String guestName = scanner.nextLine();
-
+    
         for (Reservation res : reservations) {
             if (res.getGuestName().equalsIgnoreCase(guestName)) {
                 System.out.println("Editing reservation for " + guestName);
-                System.out.print("Enter new guest name: ");
+    
+                // Edit guest name
+                System.out.print("Enter new guest name (leave empty if unchanged): ");
                 String newGuestName = scanner.nextLine();
-                res.setGuestName(newGuestName);
+                if (!newGuestName.isEmpty()) {
+                    res.setGuestName(newGuestName);
+                }
+    
+                // Edit room num
+                displayAvailableAccommodations();
+                System.out.print("Enter new room number (leave empty if unchanged): ");
+                String newRoomNumber = scanner.nextLine();
+                if (!newRoomNumber.isEmpty()) {
+
+                    Accommodation newAccommodation = null;
+                    for (Accommodation acc : accommodations) {
+                        if (acc.getRoomNumber().toLowerCase().equals(newRoomNumber) && acc.isAvailable()) {
+                            newAccommodation = acc;
+                            break;
+                        }
+                    }
+    
+                    if (newAccommodation != null) {
+                        res.getAccommodation().releaseRoom();
+                        res.setAccommodation(newAccommodation);
+                        newAccommodation.bookRoom();
+                    } else {
+                        System.out.println("New room not available.");
+                    }
+                }
+    
+                // Edit number of nights
+                System.out.print("Enter new number of nights (leave empty if unchanged): ");
+                String nightsInput = scanner.nextLine();
+                if (!nightsInput.isEmpty()) {
+                    try {
+                        int newNights = Integer.parseInt(nightsInput);
+                        res.setNights(newNights);
+                    } catch (NumberFormatException e) {
+                        System.out.println("Invalid number of nights. Please enter a valid number.");
+                    }
+                }
                 System.out.println("Reservation updated.");
                 return;
             }
         }
-
         System.out.println("No reservation found for that guest.");
     }
-
+    
     private static void deleteReservation(Scanner scanner) {
         System.out.print("Enter guest name to delete reservation: ");
         scanner.nextLine();
         String guestName = scanner.nextLine();
-
+    
         for (Reservation res : reservations) {
             if (res.getGuestName().equalsIgnoreCase(guestName)) {
-                accommodations.stream().filter(acc -> acc.getRoomNumber().equals(res.getAccommodation().getRoomNumber()))
-                        .forEach(acc -> acc.releaseRoom());
+                res.getAccommodation().releaseRoom();
                 reservations.remove(res);
-                System.out.println("Reservation deleted.");
+                System.out.println("Reservation deleted for " + guestName);
                 return;
             }
         }
-
         System.out.println("No reservation found for that guest.");
     }
+    
 }
